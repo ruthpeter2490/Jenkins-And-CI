@@ -1,0 +1,68 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1360.vc6700e3136f5">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@2.2150.v4cfd8916915c"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@2.2150.v4cfd8916915c">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Triggering a build pipeline through git</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.37.3.1">
+      <projectUrl>https://github.com/spring-projects/spring-petclinic.git/</projectUrl>
+      <displayName>Github petclinic</displayName>
+    </com.coravy.hudson.plugins.github.GithubProjectProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@3806.va_3a_6988277b_2">
+    <script>pipeline {
+    agent any
+
+    tools {
+    maven &apos;mvn&apos;
+  }
+    stages {
+        stage(&apos;Checkout&apos;) {
+         steps {
+        checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/main&apos;]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: &apos;https://github.com/spring-projects/spring-petclinic.git/&apos;]]])
+            }
+        }
+        
+        stage (&apos;Initialize&apos;) {
+            steps {
+                sh &apos;&apos;&apos;
+                    echo &quot;PATH = ${PATH}&quot;
+                    echo &quot;M2_HOME = ${M2_HOME}&quot;
+                &apos;&apos;&apos; 
+            }
+        }
+        
+        stage(&apos;Build&apos;) {
+            steps {
+                sh &apos;mvn -B clean package&apos;
+            }
+        }
+        
+        
+        stage(&quot;SonarQube analysis&quot;) {
+            steps {
+               
+                withCredentials([string(credentialsId: &apos;sonar-token&apos;, variable: &apos;sonar_token&apos;)]) {
+                withSonarQubeEnv(installationName: &apos;sonarqube-container&apos;) {
+                    sh &quot;mvn sonar:sonar -Dsonar.login=${sonar_token}&quot;
+                    }
+                }
+     
+            }
+            
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

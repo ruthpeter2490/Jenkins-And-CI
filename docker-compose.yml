@@ -1,0 +1,70 @@
+version: '3'
+
+services:
+
+  #docker dind (docker inside docker)
+  jenkins-docker:
+    image: docker:dind
+    container_name: jenkins-docker
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    networks:
+      - jenkins-network
+    volumes:
+      - jenkins-docker-certs:/certs/client
+      - jenkins-petclinic-data:/var/jenkins_home
+    ports:
+      - "3000:3000"
+      - "2376:2376"
+
+  #jenkins container
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jenkins
+    volumes:
+      - jenkins-petclinic-data:/var/jenkins_home
+    networks:
+      - jenkins-network
+    ports:
+      - "8080:8080"
+    environment:
+      - JENKINS_ADMIN_ID=admin 
+      - JENKINS_ADMIN_PASSWORD=admin
+
+  #sonarqube container
+  sonarqube:
+    image: sonarqube:9.9-community
+    container_name: sonarqube-container
+    ports:
+      - "9000:9000"
+    environment:
+      - sonar.jdbc.username=sonar
+      - sonar.jdbc.password=sonar
+      - sonar.jdbc.url=jdbc:postgresql://db:5432/sonarqube
+    networks:
+      - jenkins-network
+    depends_on:
+      - postgres
+
+  #db container for sonarqube
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=sonarqube
+    networks:
+      - jenkins-network
+
+#networks
+networks:
+  jenkins-network:
+    driver: bridge 
+
+#volumes
+volumes:
+  jenkins-petclinic-data:
+  jenkins-docker-certs:

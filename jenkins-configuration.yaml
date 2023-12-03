@@ -1,0 +1,43 @@
+jenkins:
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        # create a user called admin
+        - id: "admin"
+          password: "admin"
+  authorizationStrategy: loggedInUsersCanDoAnything
+ 
+  crumbIssuer:
+    strict:
+      checkSessionMatch: false
+  
+unclassified:
+#set default URL
+  location:
+    url: http://jenkins:8080/
+  sonarglobalconfiguration:
+    buildWrapperEnabled: true
+    installations:
+      - name: sonarqube-container
+        serverUrl: http://sonarqube-container:9000
+        credentialsId:
+        serverAuthenticationToken: 
+        additionalAnalysisProperties:
+        additionalProperties:
+        mojoVersion:
+        triggers:
+          envVar:
+          skipScmCause: false
+          skipUpstreamCause: false
+
+
+tool:
+  maven:
+    installations:
+    - name: "mvn"
+      properties:
+      - installSource:
+          installers:
+          - maven:
+              id: "3.9.3"
